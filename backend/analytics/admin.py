@@ -7,10 +7,10 @@ class TeamAdmin(admin.ModelAdmin):
 
 
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'nickname', 'team_id')
+    list_display = ('id', 'name', 'nickname', 'team')
 
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('id', 'date', 'home_team_id', 'away_team_id', 'home_score', 'away_score', 'comp_stage', 'stadium', 'referee')
+    list_display = ('id', 'date', 'home_team', 'away_team', 'home_score', 'away_score', 'comp_stage', 'stadium', 'referee')
 
 
 admin.site.register(models.Team, TeamAdmin)
