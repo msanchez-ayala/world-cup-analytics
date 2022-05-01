@@ -2,54 +2,16 @@ import React, { Component } from "react";
 import axios from "axios"
 import './App.css';
 
-async function getTeamName(team_id) {
-  try {
-    const response = await axios.get('/api/teams/' + team_id);
-    return response.data.name
-  } catch (error) {
-    console.error(error);
-  }
-}
 
-async function getMatches() {
+async function callApi(endpoint) {
   try {
-    const response = await axios.get('/api/matches');
+    const response = await axios.get('/api/' + endpoint);
     return response.data
   } catch (error) {
     console.error(error);
   }
 }
 
-async function getTeams() {
-  try {
-    const response = await axios.get('/api/teams');
-    return response.data
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function getGroup(chunk, index) {
-  var matchups = []
-  chunk.forEach((match) => {
-    const matchup = new Matchup(match.home_team, match.away_team)
-    matchups.push(matchup)
-  })
-  return {index: index, matchups: matchups}
-}
-
-async function getMatchups(matches) {
-  const groupStMatches = matches.filter(
-    match => match.comp_stage === "Group Stage");
-  const matchupChunks = spliceIntoChunks(groupStMatches, 6)
-
-  var groupMatchups = []
-  await matchupChunks.forEach((chunk, index) => {
-    // 1-based index
-    groupMatchups.push(getGroup(chunk, index + 1))
-  })
-  return groupMatchups
- }
 
 function spliceIntoChunks(arr, chunkSize) {
   const res = [];
@@ -61,12 +23,13 @@ function spliceIntoChunks(arr, chunkSize) {
 }
 
 
-class Matchup {
-  constructor(homeTeamId, awayTeamId) {
-    this.homeTeamId = homeTeamId
-    this.awayTeamId = awayTeamId
-  }
-}
+// Return an array containg sub-arrays of 6 matches
+function getChunkedGroupStageMatches(matches) {
+  const groupStageMatches = matches.filter(
+    match => match.comp_stage === "Group Stage");
+  const matchupChunks = spliceIntoChunks(groupStageMatches, 6)
+  return matchupChunks
+ }
 
 
 class App extends Component {
@@ -74,8 +37,7 @@ class App extends Component {
     super(props)
     this.state = {
       matches: [],
-      teams: [],
-      groupMatchups: [] // {index: int, matchups: list[matchups]}
+      teams: []
     }
     
   }
@@ -83,21 +45,19 @@ class App extends Component {
   // Make ALL API calls here so that all future munging is in-memory
   async componentDidMount() {
 
-    const matches = await getMatches()
-    const groupMatchups = await getMatchups(matches)
-    const teams = await getTeams()
+    const matches = await callApi('matches')
+    const teams = await callApi('teams')
+    
     var teamNamesById = {}
     teams.forEach((team) => {
       teamNamesById[team.id] = team.name
     })
-    this.setState({matches: matches,
-                   teamNamesById: teamNamesById,
-                   groupMatchups: groupMatchups})
+    this.setState({matches: matches, teamNamesById: teamNamesById})
   }
 
   renderMatchupRow(matchup, index) {
-    const homeTeamName = this.state.teamNamesById[matchup.homeTeamId]
-    const awayTeamName = this.state.teamNamesById[matchup.awayTeamId]
+    const homeTeamName = this.state.teamNamesById[matchup.home_team]
+    const awayTeamName = this.state.teamNamesById[matchup.away_team]
     const vsText = this.state.matches ? 'vs' : ''
     return (
       <tr key={index.toString()} className="card-table-row">
@@ -108,18 +68,17 @@ class App extends Component {
     )
   }
 
-  renderMatchupRows(matchups) {
+  renderMatchupRows(matches) {
     const matchupRows = []
-    matchups.forEach((matchup, index) => {
-      const matchupRow = this.renderMatchupRow(matchup, index)
+    matches.forEach((match, index) => {
+      const matchupRow = this.renderMatchupRow(match, index)
       matchupRows.push(matchupRow)
     })
     return matchupRows
   }
 
-  renderCard(groupNum, matchups) {
-    const matchupRows = this.renderMatchupRows(matchups)
-    console.log('card matchup rows', matchupRows)
+  renderCard(groupNum, matches) {
+    const matchupRows = this.renderMatchupRows(matches)
     return (
       <div className="group-card">
         <h2 className="group-num">Group {groupNum}</h2>
@@ -133,9 +92,10 @@ class App extends Component {
   }
 
   renderCards() {
-    const cards = this.state.groupMatchups.map(
-      groupMatchup => this.renderCard(
-        groupMatchup.index, groupMatchup.matchups));  
+    const chunkedGSMatches = getChunkedGroupStageMatches(this.state.matches)
+    const cards = chunkedGSMatches.map(
+      (matchesChunk, index) => this.renderCard(
+        index + 1, matchesChunk));  
     return cards
   }
 
