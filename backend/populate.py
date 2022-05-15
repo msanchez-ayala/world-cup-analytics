@@ -88,22 +88,24 @@ def make_player_match_info(player_json: dict,
 
 
 def main() -> None:
-
+    # order of objects that need to be created - teams -> players .. matches .. -> playermatchinfo
     print('Attempting to populate the database')
 
     for match_json in sb_requests.get_matches():
 
         for team_json in sb_requests.get_teams(match_json['match_id']):
             cur_team_json = make_team(team_json)
-        
+
+        home_team = models.Team.objects.get(pk=match_json['home_team']['home_team_id'])
+        away_team = models.Team.objects.get(pk=match_json['away_team']['away_team_id'])
+        make_match(match_json, home_team, away_team)
+        # the reason this loop is repeated is to create matches before playermatchinfo
+        for team_json in sb_requests.get_teams(match_json['match_id']):
             for player_json in team_json['lineup']:
                 make_player(player_json, cur_team_json)
                 make_player_match_info(player_json, match_json, )
 
-        home_team = models.Team.objects.get(pk=match_json['home_team']['home_team_id'])
-        away_team = models.Team.objects.get(pk=match_json['away_team']['away_team_id'])
-        
-        make_match(match_json, home_team, away_team)
+
 
     print('Database population is complete')
 
