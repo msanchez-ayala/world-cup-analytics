@@ -1,5 +1,8 @@
 from analytics import models
+from typing import List
+from typing import Tuple
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 import statsbomb_requests as sb_requests
 
 
@@ -23,7 +26,8 @@ def make_player(player: dict, team: models.Team) -> models.Player:
         current_player = models.Player(id=player['player_id'],
                                        name=player['player_name'],
                                        nickname=nickname,
-                                       team=team)
+                                       team=team,
+                                       jersey_number=player['jersey_number'])
         current_player.save()
         print(f'Saved player {current_player} with ID {current_player.id}')
 
@@ -53,22 +57,53 @@ def make_match(match: dict,
     return current_match
 
 
+def parse_positions_json(positions: List[dict]) -> Tuple[str, bool]:
+    if not positions:
+        return None, False
+    # TODO: Investigate more
+    first_position_json = positions[0] or 'None'
+    starting_11 = first_position_json['start_reason'] == 'Starting XI'
+    return first_position_json['position'],  starting_11
+
+
+def make_player_match_info(player_json: dict,
+                           match_json: dict) -> models.PlayerMatchInfo:
+    print(f'make_player_match_info called with player ID '
+          f'{player_json["player_id"]} match ID {match_json["match_id"]}')
+    try:
+        current_info = models.PlayerMatchInfo.objects.get(
+            Q(player_id=player_json['player_id']) &
+            Q(match_id=match_json['match_id']))
+    except ObjectDoesNotExist:
+        position, starting_11 = parse_positions_json(player_json['positions'])
+        current_info = models.PlayerMatchInfo(
+            player_id=player_json['player_id'],
+            match_id=match_json['match_id'],
+            position=position,
+            starting_11=starting_11
+        )
+        current_info.save()
+        print(f'Saved player match info {current_info}')
+    return current_info
+
+
 def main() -> None:
 
     print('Attempting to populate the database')
 
-    for match in sb_requests.get_matches():
+    for match_json in sb_requests.get_matches():
 
-        for team in sb_requests.get_teams(match['match_id']):
-            current_team = make_team(team)
+        for team_json in sb_requests.get_teams(match_json['match_id']):
+            cur_team_json = make_team(team_json)
         
-            for player in team['lineup']:
-                make_player(player, current_team)
+            for player_json in team_json['lineup']:
+                make_player(player_json, cur_team_json)
+                make_player_match_info(player_json, match_json, )
+
+        home_team = models.Team.objects.get(pk=match_json['home_team']['home_team_id'])
+        away_team = models.Team.objects.get(pk=match_json['away_team']['away_team_id'])
         
-        home_team = models.Team.objects.get(pk=match['home_team']['home_team_id'])
-        away_team = models.Team.objects.get(pk=match['away_team']['away_team_id'])
-        
-        make_match(match, home_team, away_team)
+        make_match(match_json, home_team, away_team)
 
     print('Database population is complete')
 
