@@ -6,12 +6,18 @@ from django.db.models import Q
 import statsbomb_requests as sb_requests
 
 
-def make_team(team: dict) -> models.Team:
-    print(f'make_team called with ID {team["team_id"]}')
+def make_team(match_json: dict, home: bool) -> models.Team:
+    which_team = "home_team" if home else "away_team"
+    team_json = match_json[which_team]
+    print(f'make_team called with ID {team_json[f"{which_team}_id"]}')
     try:
-        current_team = models.Team.objects.get(pk=team['team_id'])
+        current_team = models.Team.objects.get(pk=team_json[f"{which_team}_id"])
     except ObjectDoesNotExist:
-        current_team = models.Team(id=team['team_id'], name=team['team_name'])
+        current_team = models.Team(
+            id=team_json[f"{which_team}_id"],
+            name=team_json[f'{which_team}_name'],
+            group=team_json[f'{which_team}_group']
+        )
         current_team.save()
         print(f'Saved team {current_team} with ID {current_team.id}')
     return current_team
@@ -92,17 +98,18 @@ def main() -> None:
     print('Attempting to populate the database')
 
     for match_json in sb_requests.get_matches():
+        if match_json["competition_stage"]["name"] != "Group Stage":
+            continue
 
-        for team_json in sb_requests.get_teams(match_json['match_id']):
-            cur_team_json = make_team(team_json)
+        home_team = make_team(match_json, home= True)
+        away_team = make_team(match_json, home= False)
 
-        home_team = models.Team.objects.get(pk=match_json['home_team']['home_team_id'])
-        away_team = models.Team.objects.get(pk=match_json['away_team']['away_team_id'])
         make_match(match_json, home_team, away_team)
         # the reason this loop is repeated is to create matches before playermatchinfo
         for team_json in sb_requests.get_teams(match_json['match_id']):
+            curr_team = models.Team.objects.get(pk=team_json['team_id'])
             for player_json in team_json['lineup']:
-                make_player(player_json, cur_team_json)
+                make_player(player_json, curr_team)
                 make_player_match_info(player_json, match_json, )
 
 
