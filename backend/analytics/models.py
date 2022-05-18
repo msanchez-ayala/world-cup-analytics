@@ -4,7 +4,7 @@ from django.db import models
 class Team(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
-    # group = models.TextField()
+    group = models.TextField()
 
     def __str__(self):
         return self.name
@@ -34,6 +34,7 @@ class Match(models.Model):
     stadium = models.TextField()
     referee = models.TextField()
 
+
     def __str__(self):
     
         return f"{self.home_team.name} V {self.away_team.name}"
@@ -47,6 +48,11 @@ class PlayerMatchInfo(models.Model):
 
     def __str__(self):
         return f"Match {self.match.id}: player {self.player.name}"
+
+
+
+
+
 
 
 

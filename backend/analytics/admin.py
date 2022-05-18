@@ -3,7 +3,7 @@ from . import models
 
 
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('id', 'name', 'group')
 
 
 class PlayerAdmin(admin.ModelAdmin):
