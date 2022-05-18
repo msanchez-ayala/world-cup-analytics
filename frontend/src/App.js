@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
 import './App.css';
-import {getChunkedGroupStageMatches, callApi} from './parser.js'
+import {getChunkedGroupStageMatches, callApi, groupMap} from './parser.js'
 
 
 class App extends Component {
@@ -25,6 +25,8 @@ class App extends Component {
       teamNamesById[team.id] = team.name
     })
     this.setState({matches: matches, teamNamesById: teamNamesById})
+    const teamsByGroup = groupMap(teams)
+    console.log(teamsByGroup)
   }
 
   renderMatchupRow(matchup, index) {
