@@ -98,6 +98,7 @@ def main() -> None:
     print('Attempting to populate the database')
 
     for match_json in sb_requests.get_matches():
+        # FIXME: allow elimination stage as well 
         if match_json["competition_stage"]["name"] != "Group Stage":
             continue
 

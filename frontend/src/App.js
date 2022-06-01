@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
 import './App.css';
-import {getChunkedGroupStageMatches, callApi, groupMap} from './parser.js'
+import {callApi, groupMap, getAllTeamStatistics} from './parser.js'
 
 
 class App extends Component {
@@ -9,7 +9,8 @@ class App extends Component {
     super(props)
     this.state = {
       matches: [],
-      teamsByGroup: {}
+      teamsByGroup: {},
+      teams: []
     }
     
   }
@@ -20,18 +21,40 @@ class App extends Component {
     const matches = await callApi('matches')
     const teams = await callApi('teams')
   
-    this.setState({matches: matches, teamsByGroup: groupMap(teams)})
-    console.log(this.teamsByGroup)
+    this.setState({
+      matches: matches, 
+      teamsByGroup: groupMap(teams)
+    })
   }
 
-  renderCard(groupNum, matches) {
-    const matchupRows = this.renderMatchupRows(matches)
+  renderTeamRow(groupName, teamId, stats) {
+    
+    // TODO get team name
+    // const teamName = this.state.teamsByGroup[groupName]
+    return (
+      <tr>
+        <td></td>
+      </tr>
+    )
+  }
+
+  renderCard(groupName, statsByTeamId) {
+    var teamRows = []
+
+
     return (
       <div className="group-card">
-        <h2 className="group-num">Group {groupNum}</h2>
+        <h2 className="group-num">Group {groupName}</h2>
         <table className="card-table">
+          <thead>
+            <th>Country</th>
+            <th>Wins</th>
+            <th>Losses</th>
+            <th>Draws</th>
+            <th>Points</th>
+          </thead>
           <tbody>
-            {matchupRows}
+            {teamRows}
           </tbody>
         </table>
       </div>
@@ -39,10 +62,13 @@ class App extends Component {
   }
 
   renderCards() {
-    const chunkedGSMatches = getChunkedGroupStageMatches(this.state.matches)
-    const cards = chunkedGSMatches.map(
-      (matchesChunk, index) => this.renderCard(
-        index + 1, matchesChunk));  
+    const statsByGroup = getAllTeamStatistics(
+      this.state.teamsByGroup, this.state.matches)
+    const cards = []
+    const groupNames = Object.keys(statsByGroup)
+    groupNames.forEach(groupName => {
+      cards.push(this.renderCard(groupName, statsByGroup[groupName]))
+    })
     return cards
   }
 
