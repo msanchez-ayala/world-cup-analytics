@@ -9,7 +9,7 @@ class App extends Component {
     super(props)
     this.state = {
       matches: [],
-      teams: []
+      teamsByGroup: {}
     }
     
   }
@@ -19,36 +19,9 @@ class App extends Component {
 
     const matches = await callApi('matches')
     const teams = await callApi('teams')
-    
-    var teamNamesById = {}
-    teams.forEach((team) => {
-      teamNamesById[team.id] = team.name
-    })
-    this.setState({matches: matches, teamNamesById: teamNamesById})
-    const teamsByGroup = groupMap(teams)
-    console.log(teamsByGroup)
-  }
-
-  renderMatchupRow(matchup, index) {
-    const homeTeamName = this.state.teamNamesById[matchup.home_team]
-    const awayTeamName = this.state.teamNamesById[matchup.away_team]
-    const vsText = this.state.matches ? 'vs' : ''
-    return (
-      <tr key={index.toString()} className="card-table-row">
-        <td>{homeTeamName}</td>
-        <td className="vs-cell">{vsText}</td>
-        <td>{awayTeamName}</td>
-      </tr>
-    )
-  }
-
-  renderMatchupRows(matches) {
-    const matchupRows = []
-    matches.forEach((match, index) => {
-      const matchupRow = this.renderMatchupRow(match, index)
-      matchupRows.push(matchupRow)
-    })
-    return matchupRows
+  
+    this.setState({matches: matches, teamsByGroup: groupMap(teams)})
+    console.log(this.teamsByGroup)
   }
 
   renderCard(groupNum, matches) {
