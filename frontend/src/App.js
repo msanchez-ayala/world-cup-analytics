@@ -40,11 +40,11 @@ class App extends Component {
     const teamStats = statsByTeamId[teamId]
     return (
       <tr key={teamId}>
-        <td>{teamName}</td>
-        <td>{teamStats.wins}</td>
-        <td>{teamStats.losses}</td>
-        <td>{teamStats.draws}</td>
-        <td>{teamStats.points}</td>
+        <td className="country-cell">{teamName}</td>
+        <td className="stats-cell">{teamStats.wins}</td>
+        <td className="stats-cell">{teamStats.losses}</td>
+        <td className="stats-cell">{teamStats.draws}</td>
+        <td className="stats-cell">{teamStats.points}</td>
       </tr>
     )
   }
@@ -65,11 +65,11 @@ class App extends Component {
         <table className="card-table">
           <thead>
             <tr>
-              <th>Country</th>
-              <th>W</th>
-              <th>L</th>
-              <th>D</th>
-              <th>P</th>
+              <th className="country-cell">Country</th>
+              <th className="stats-cell">W</th>
+              <th className="stats-cell">L</th>
+              <th className="stats-cell">D</th>
+              <th className="stats-cell">P</th>
             </tr>
           </thead>
           <tbody>
