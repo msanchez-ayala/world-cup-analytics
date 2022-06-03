@@ -20,38 +20,57 @@ class App extends Component {
 
     const matches = await callApi('matches')
     const teams = await callApi('teams')
-  
+    
+    var teamNamesByTeamId = {}
+    teams.forEach(team => {
+      teamNamesByTeamId[team.id] = team.name
+    })
+
     this.setState({
       matches: matches, 
-      teamsByGroup: groupMap(teams)
+      teamsByGroup: groupMap(teams),
+      teamNamesByTeamId: teamNamesByTeamId
     })
+    // console.log('teams', teams)
   }
 
-  renderTeamRow(groupName, teamId, stats) {
+  renderTeamRow(teamId, statsByTeamId) {
     
-    // TODO get team name
-    // const teamName = this.state.teamsByGroup[groupName]
+    const teamName = this.state.teamNamesByTeamId[teamId]
+    const teamStats = statsByTeamId[teamId]
     return (
-      <tr>
-        <td></td>
+      <tr key={teamId}>
+        <td>{teamName}</td>
+        <td>{teamStats.wins}</td>
+        <td>{teamStats.losses}</td>
+        <td>{teamStats.draws}</td>
+        <td>{teamStats.points}</td>
       </tr>
     )
   }
 
-  renderCard(groupName, statsByTeamId) {
+  renderCard(groupName, statsByTeamId, idx) {
     var teamRows = []
+    // console.log('statsByTeamId', statsByTeamId)
+    const teamIds = Object.keys(statsByTeamId)
+    teamIds.forEach(teamId => {
+      teamId = parseInt(teamId)
+      teamRows.push(this.renderTeamRow(teamId, statsByTeamId))
+    })
 
 
     return (
-      <div className="group-card">
+      <div className="group-card" key={idx}>
         <h2 className="group-num">Group {groupName}</h2>
         <table className="card-table">
           <thead>
-            <th>Country</th>
-            <th>Wins</th>
-            <th>Losses</th>
-            <th>Draws</th>
-            <th>Points</th>
+            <tr>
+              <th>Country</th>
+              <th>W</th>
+              <th>L</th>
+              <th>D</th>
+              <th>P</th>
+            </tr>
           </thead>
           <tbody>
             {teamRows}
@@ -66,8 +85,8 @@ class App extends Component {
       this.state.teamsByGroup, this.state.matches)
     const cards = []
     const groupNames = Object.keys(statsByGroup)
-    groupNames.forEach(groupName => {
-      cards.push(this.renderCard(groupName, statsByGroup[groupName]))
+    groupNames.forEach((groupName, idx) => {
+      cards.push(this.renderCard(groupName, statsByGroup[groupName], idx))
     })
     return cards
   }

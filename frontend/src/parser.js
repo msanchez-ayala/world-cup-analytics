@@ -94,13 +94,5 @@ function tallyStatistics(teamIds, groupStageMatches) {
 
 }
 
-// For each match we have to create a table structure containing
-// - wins
-// - losses
-// - draws
-// - total points
-
-// 
-
 
 export {callApi, groupMap, getAllTeamStatistics}
